@@ -1,96 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
     <title>QR Code Generator</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-color: #e9ecef;
-        text-align: center;
-        padding: 50px;
+        font-family: Arial;
+        margin: 50px;
       }
-
-      form {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        display: inline-block;
-      }
-
-      input[type="text"],
-      input[type="color"] {
-        padding: 10px;
-        margin: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-      }
-
-      input[type="submit"],
+      input,
       button {
-        padding: 10px 20px;
-        margin: 10px;
-        border: none;
-        border-radius: 5px;
-        color: white;
-        cursor: pointer;
+        padding: 10px;
+        margin: 10px 0;
+        width: 100%;
       }
-
-      input[type="submit"] {
-        background: #28a745;
-      }
-
-      button.reset {
-        background: #dc3545;
-      }
-
-      .qr-result {
-        margin-top: 30px;
-      }
-
-      .download-btn {
-        background: #007bff;
-        text-decoration: none;
-        padding: 10px 20px;
-        color: white;
-        border-radius: 5px;
+      .qr-container {
+        margin-top: 20px;
       }
     </style>
   </head>
   <body>
     <h1>QR Code Generator</h1>
-    <form method="POST">
-      <div>
-        <input type="text" name="link" placeholder="Enter your link" required />
-      </div>
-      <div>
-        <label>Foreground Color:</label>
-        <input type="color" name="fill_color" value="#000000" />
-      </div>
-      <div>
-        <label>Background Color:</label>
-        <input type="color" name="back_color" value="#ffffff" />
-      </div>
-      <div>
-        <input type="submit" value="Generate QR Code" />
-        <button type="reset" class="reset">Reset</button>
-      </div>
+    {% with messages = get_flashed_messages() %} {% if messages %} {% for
+    message in messages %}
+    <p style="color: red">{{ message }}</p>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <form method="POST" action="/">
+      <label for="url">Enter URL:</label>
+      <input type="text" name="url" id="url" required />
+
+      <label for="foreground_color">Foreground Color:</label>
+      <input
+        type="text"
+        name="foreground_color"
+        id="foreground_color"
+        placeholder="e.g., brown"
+        required
+      />
+
+      <label for="background_color">Background Color:</label>
+      <input
+        type="text"
+        name="background_color"
+        id="background_color"
+        placeholder="e.g., #f5f5dc"
+        required
+      />
+
+      <button type="submit">Generate QR Code</button>
+      <button type="reset">Reset</button>
     </form>
 
-    {% if qr_generated %}
-    <div class="qr-result">
-      <h3>Here is your QR Code:</h3>
-      <img
-        src="{{ url_for('static', filename=qr_filename) }}"
-        alt="QR Code"
-        width="250"
-      />
-      <br /><br />
-      <a
-        href="{{ url_for('static', filename=qr_filename) }}"
-        download="my_qr_code.png"
-        class="download-btn"
-        >Download QR Code</a
-      >
+    {% if qr_data %}
+    <div class="qr-container">
+      <h2>Your QR Code:</h2>
+      <img src="data:image/png;base64,{{ qr_data | b64decode | safe | tojson |
+      replace('\"','') | safe | urlsafe_b64encode }}" alt="QR Code">
+      <form method="POST" action="/download">
+        <input type="hidden" name="url" value="{{ request.form['url'] }}" />
+        <input
+          type="hidden"
+          name="foreground_color"
+          value="{{ request.form['foreground_color'] }}"
+        />
+        <input
+          type="hidden"
+          name="background_color"
+          value="{{ request.form['background_color'] }}"
+        />
+        <button type="submit">Download QR Code</button>
+      </form>
     </div>
     {% endif %}
   </body>
