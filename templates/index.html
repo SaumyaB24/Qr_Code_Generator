@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>QR Code Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #e9ecef;
+        text-align: center;
+        padding: 50px;
+      }
+
+      form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        display: inline-block;
+      }
+
+      input[type="text"],
+      input[type="color"] {
+        padding: 10px;
+        margin: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      input[type="submit"],
+      button {
+        padding: 10px 20px;
+        margin: 10px;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+      }
+
+      input[type="submit"] {
+        background: #28a745;
+      }
+
+      button.reset {
+        background: #dc3545;
+      }
+
+      .qr-result {
+        margin-top: 30px;
+      }
+
+      .download-btn {
+        background: #007bff;
+        text-decoration: none;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>QR Code Generator</h1>
+    <form method="POST">
+      <div>
+        <input type="text" name="link" placeholder="Enter your link" required />
+      </div>
+      <div>
+        <label>Foreground Color:</label>
+        <input type="color" name="fill_color" value="#000000" />
+      </div>
+      <div>
+        <label>Background Color:</label>
+        <input type="color" name="back_color" value="#ffffff" />
+      </div>
+      <div>
+        <input type="submit" value="Generate QR Code" />
+        <button type="reset" class="reset">Reset</button>
+      </div>
+    </form>
+
+    {% if qr_generated %}
+    <div class="qr-result">
+      <h3>Here is your QR Code:</h3>
+      <img
+        src="{{ url_for('static', filename=qr_filename) }}"
+        alt="QR Code"
+        width="250"
+      />
+      <br /><br />
+      <a
+        href="{{ url_for('static', filename=qr_filename) }}"
+        download="my_qr_code.png"
+        class="download-btn"
+        >Download QR Code</a
+      >
+    </div>
+    {% endif %}
+  </body>
+</html>
