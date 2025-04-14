@@ -5,73 +5,47 @@
     <title>QR Code Generator</title>
     <style>
       body {
-        font-family: Arial;
-        margin: 50px;
+        font-family: Arial, sans-serif;
+        padding: 2rem;
       }
-      input,
-      button {
-        padding: 10px;
-        margin: 10px 0;
-        width: 100%;
+      form input,
+      form button {
+        margin: 0.5rem 0;
+        padding: 0.5rem;
       }
-      .qr-container {
-        margin-top: 20px;
+      img {
+        margin-top: 1rem;
       }
     </style>
   </head>
   <body>
     <h1>QR Code Generator</h1>
-    {% with messages = get_flashed_messages() %} {% if messages %} {% for
-    message in messages %}
-    <p style="color: red">{{ message }}</p>
-    {% endfor %} {% endif %} {% endwith %}
-
-    <form method="POST" action="/">
-      <label for="url">Enter URL:</label>
-      <input type="text" name="url" id="url" required />
-
-      <label for="foreground_color">Foreground Color:</label>
+    <form method="POST">
+      <input type="text" name="url" placeholder="Enter URL" required /><br />
       <input
         type="text"
-        name="foreground_color"
-        id="foreground_color"
-        placeholder="e.g., brown"
-        required
-      />
-
-      <label for="background_color">Background Color:</label>
+        name="fill_color"
+        placeholder="Foreground Color (e.g. brown)"
+      /><br />
       <input
         type="text"
-        name="background_color"
-        id="background_color"
-        placeholder="e.g., #f5f5dc"
-        required
-      />
-
-      <button type="submit">Generate QR Code</button>
+        name="back_color"
+        placeholder="Background Color (e.g. #f5f5dc)"
+      /><br />
+      <button type="submit">Generate QR</button>
       <button type="reset">Reset</button>
     </form>
 
-    {% if qr_data %}
-    <div class="qr-container">
-      <h2>Your QR Code:</h2>
-      <img src="data:image/png;base64,{{ qr_data | b64decode | safe | tojson |
-      replace('\"','') | safe | urlsafe_b64encode }}" alt="QR Code">
-      <form method="POST" action="/download">
-        <input type="hidden" name="url" value="{{ request.form['url'] }}" />
-        <input
-          type="hidden"
-          name="foreground_color"
-          value="{{ request.form['foreground_color'] }}"
-        />
-        <input
-          type="hidden"
-          name="background_color"
-          value="{{ request.form['background_color'] }}"
-        />
-        <button type="submit">Download QR Code</button>
-      </form>
-    </div>
+    {% if qr_filename %}
+    <h2>Generated QR Code:</h2>
+    <img
+      src="{{ url_for('static', filename='qrcodes/' + qr_filename) }}"
+      alt="QR Code"
+      width="300"
+    /><br />
+    <a href="{{ url_for('download_file', filename=qr_filename) }}"
+      >Download QR Code</a
+    >
     {% endif %}
   </body>
 </html>

@@ -1,67 +1,40 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for, flash
+from flask import Flask, render_template, request, send_file, url_for
 import qrcode
-import qrcode.constants
-from PIL import Image
-import io
 import os
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'secret123'  # Required for flash messages
+UPLOAD_FOLDER = os.path.join('static', 'qrcodes')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Route
-@app.route("/", methods=["GET", "POST"])
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    qr_data = None
-    if request.method == "POST":
-        try:
-            url = request.form["url"]
-            foreground_color = request.form["foreground_color"]
-            background_color = request.form["background_color"]
+    qr_filename = None
+    if request.method == 'POST':
+        url = request.form.get('url')
+        fill_color = request.form.get('fill_color') or 'black'
+        back_color = request.form.get('back_color') or 'white'
 
+        if url:
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_H,
                 box_size=10,
-                border=4
+                border=4,
             )
             qr.add_data(url)
             qr.make(fit=True)
 
-            img = qr.make_image(fill_color=foreground_color, back_color=background_color)
-            img_io = io.BytesIO()
-            img.save(img_io, "PNG")
-            img_io.seek(0)
+            img = qr.make_image(fill_color=fill_color, back_color=back_color)
+            qr_filename = f"qr_{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
+            img_path = os.path.join(UPLOAD_FOLDER, qr_filename)
+            img.save(img_path)
 
-            qr_data = img_io.getvalue().hex()
-            return render_template("index.html", qr_data=qr_data)
+    return render_template('index.html', qr_filename=qr_filename)
 
-        except Exception as e:
-            flash(f"Error: {str(e)}")
-            return redirect(url_for("index"))
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_file(os.path.join(UPLOAD_FOLDER, filename), as_attachment=True)
 
-    return render_template("index.html", qr_data=qr_data)
-
-@app.route("/download", methods=["POST"])
-def download():
-    url = request.form["url"]
-    foreground_color = request.form["foreground_color"]
-    background_color = request.form["background_color"]
-
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=4
-    )
-    qr.add_data(url)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color=foreground_color, back_color=background_color)
-    img_io = io.BytesIO()
-    img.save(img_io, "PNG")
-    img_io.seek(0)
-    return send_file(img_io, mimetype="image/png", as_attachment=True, download_name="generated_qr.png")
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
