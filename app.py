@@ -1,39 +1,31 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, send_file
 import qrcode
-import qrcode.constants
-import os
+from PIL import Image
+import io
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static'
 
-@app.route('/', methods=['GET', 'POST'])
-def generate_qr():
-    qr_generated = False
-    qr_filename = None
-
-    if request.method == 'POST':
-        link = request.form.get('link')
-        fill_color = request.form.get('fill_color')
-        back_color = request.form.get('back_color')
-
-        # Generate QR
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=10,
-            border=4
-        )
-        qr.add_data(link)
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        url = request.form["url"]
+        foreground_color = request.form["foreground_color"]
+        background_color = request.form["background_color"]
+        
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=4)
+        qr.add_data(url)
         qr.make(fit=True)
-        img = qr.make_image(fill_color=fill_color, back_color=back_color)
+        
+        img = qr.make_image(fill_color=foreground_color, back_color=background_color)
+        
+        # Save the generated QR code image in memory
+        img_io = io.BytesIO()
+        img.save(img_io, "PNG")
+        img_io.seek(0)
 
-        # Save to static folder
-        qr_filename = 'qr_code.png'
-        img_path = os.path.join(app.config['UPLOAD_FOLDER'], qr_filename)
-        img.save(img_path)
-        qr_generated = True
+        return send_file(img_io, mimetype="image/png", as_attachment=True, download_name="generated_qr.png")
+    
+    return render_template("index.html")
 
-    return render_template('index.html', qr_generated=qr_generated, qr_filename=qr_filename)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
